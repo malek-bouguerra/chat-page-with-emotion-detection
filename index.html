@@ -4,34 +4,55 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 </head>
-<body>
+<body onunload="sendBrowserClosedMessageToServer()">
 
 <h3 style='color: #ccc;font-size: 30px;'>No message yet..</h3>
     <div class="message_holder"></div>
 
     <form action="" method="POST">
-      <input type="text" class="username" placeholder="User Name"/>
       <input type="text" class="message" placeholder="Messages"/>
       <input type="submit"/>
     </form>
 
 <script type="text/javascript">
+
+
+
+var queryString = decodeURIComponent(window.location.search);
+queryString = queryString.substring(1);
+var queries = queryString.split("&");
+for (var i = 0; i < queries.length; i++)
+{
+    user_name=queries[i].split("=")[1]
+    document.write(queries[i].split("=")[1] + "<br>");
+}
 $(document).ready(function() {
     var socket = io.connect('http://127.0.0.1:5000');
+
+    function sendBrowserClosedMessageToServer(){
+        console.log('user has disconnected!')
+        socket.emit('disconnection event',{disc : socket.id})
+    }
+
     socket.on( 'connect', function() {
-        socket.emit( 'my event', {
-          data: 'User Connected'
+        socket.emit( 'my event connection', {
+          data: 'User Connected',
+          user_id : socket.id,
+          user_name : user_name
         } )
         var form = $( 'form' ).on( 'submit', function( e ) {
           e.preventDefault()
-          let user_name = $( 'input.username' ).val()
           let user_input = $( 'input.message' ).val()
-          socket.emit( 'my event', {
-            user_name : user_name,
+          socket.emit( 'my event message', {
+            user_id : socket.id,
             message : user_input
           } )
           $( 'input.message' ).val( '' ).focus()
         } )
+        socket.on('disconnect',function(){
+            console.log('user has disconnected!')
+            socket.emit('disconnection event',{disc : socket.id})
+        })
     } )
     socket.on( 'my response', function( msg ) {
         console.log( msg )
@@ -40,7 +61,29 @@ $(document).ready(function() {
           $( 'div.message_holder' ).append( '<div><b style="color: #000">'+msg.user_name+'</b> '+msg.message+'</div>' )
         }
     })
+
+    socket.on( 'my response connection', function( list_users ) {
+        console.log( list_users )
+        for (var key in list_users) {
+            if (list_users.hasOwnProperty(key)) {
+                console.log(key, list_users[key]);
+                $( 'h3' ).remove()
+                $( 'div.message_holder' ).append( '<div><b style="color: #000">'+list_users[key]+'</b> '+' is connected !'+'</div>' )
+            }
+        }
+
     })
+
+
+
+    socket.on( 'response disconnection', function( name ) {
+        console.log( name )
+        $( 'h3' ).remove()
+        $( 'div.message_holder' ).append( '<div><b style="color: #000">'+name+'</b> '+' has disconnected !'+'</div>' )
+    })
+
+    })
+
 </script>
 
 </body>
