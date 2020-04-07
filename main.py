@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_socketio import SocketIO, send, emit
 from aylienapiclient import textapi
-from flask_login import current_user
 
 
 
@@ -11,28 +10,43 @@ socketio = SocketIO(app,cors_allowed_origins='*')
 
 client = textapi.Client("be8862f5", "873f2bb1ab151d51d050114c84018841")
 
-@socketio.on('message')
-def handleMessage(msg):
-	sentiment = client.Sentiment({'text': msg})['polarity']
-	if sentiment=='positive':
-		emoji=":)"
-	elif sentiment=='negative':
-		emoji=":("
-	else:
-		emoji=":|"
-	print('Message: ' + msg)
-	msg_emoji= msg+ " "+emoji
-	send(msg_emoji, broadcast=True)
+def messageReceived(methods=['GET', 'POST']):
+    print('message was received!!!')
 
-@socketio.on('connect')
-def connect_handler():
-    if current_user.is_authenticated:
-        emit('my response',
-             {'message': '{0} has joined'.format(current_user.name)},
-             broadcast=True)
-    else:
-        return False  # not allowed here
+@socketio.on('my event')
+def handle_my_custom_event(json, methods=['GET', 'POST']):
+	if len(json.keys())>1:
+		if str(json['message'])!='':
+			msg=json['message']
+			sentiment = client.Sentiment({'text': json['message']})['polarity']
+			if sentiment=='positive':
+				emoji=":)"
+			elif sentiment=='negative':
+				emoji=":("
+			else:
+				emoji=":|"
+			print('Message: ' + msg)
+			msg_emoji= msg+ " "+emoji
+			json['message']=msg_emoji
+			socketio.emit('my response', json, callback=messageReceived)
+			print('received my event: ' + str(json))
+
+
+
 
 if __name__ == '__main__':
 	# print('helloWorld')
 	socketio.run(app)
+
+
+
+# sentiment = client.Sentiment({'text': msg})['polarity']
+# 	if sentiment=='positive':
+# 		emoji=":)"
+# 	elif sentiment=='negative':
+# 		emoji=":("
+# 	else:
+# 		emoji=":|"
+# 	print('Message: ' + msg)
+# 	msg_emoji= msg+ " "+emoji
+# 	send(msg_emoji, broadcast=True)
