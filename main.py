@@ -49,7 +49,7 @@ def handleDisconnection(id,methods=['GET', 'POST']):
 
 if __name__ == '__main__':
 	# print('helloWorld')
-	socketio.run(app)
+	app.run()
 
 
 
