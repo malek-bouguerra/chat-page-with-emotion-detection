@@ -27,7 +27,7 @@ for (var i = 0; i < queries.length; i++)
     document.write(queries[i].split("=")[1] + "<br>");
 }
 $(document).ready(function() {
-    var socket = io.connect('http://127.0.0.1:'+process.env.PORT);
+    var socket = io.connect('https://mmyfirstapp.herokuapp.com'+':'+process.env.PORT);
 
     function sendBrowserClosedMessageToServer(){
         console.log('user has disconnected!')
